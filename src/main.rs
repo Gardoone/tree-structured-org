@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fs::create_dir, time::TryFromFloatSecsError};
+use std::collections::HashMap;
 
 struct User {
     id: String,
@@ -7,10 +7,10 @@ struct User {
     reports: u16
 }
 
-fn build_user(id: String, parent: String) -> User {
+fn build_user(id: &String, parent: &String) -> User {
     User {
-        id: id,
-        parent: parent,
+        id: id.to_string(),
+        parent: parent.to_string(),
         childs: Vec::new(),
         reports: 0,
     }
@@ -18,43 +18,40 @@ fn build_user(id: String, parent: String) -> User {
 
 fn build_database()-> HashMap<String, HashMap<String, User>> {
 
-    let mut database: HashMap<String, HashMap<String, User>> = HashMap::new();
+    let database: HashMap<String, HashMap<String, User>> = HashMap::new();
 
     return database;
-
 }
 
 
 fn build_certificate_tree () -> HashMap<String, User> {
 
-    let mut users: HashMap<String, User> = HashMap::new();
+    let users: HashMap<String, User> = HashMap::new();
 
     return users
 }
 
 
-fn add_certificate_tree (certificate: String, mut database: HashMap<String, HashMap<String, User>>) -> HashMap<String, HashMap<String, User>> {
+fn add_certificate_tree (certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
 
-    let mut users = build_certificate_tree ();
+    let users = build_certificate_tree ();
 
-    database.insert(certificate.clone(), users);   
+    database.insert(certificate.to_string(), users);   
 
-    return database
 }
 
-fn add_user(id: String,
-            parent: String,
-            certificate: String,
-            mut database: HashMap<String, HashMap<String, User>>) 
-            -> HashMap<String, HashMap<String, User>> {
+fn add_user(id: &String,
+            parent: &String,
+            certificate: &String,
+            database: &mut HashMap<String, HashMap<String, User>>) {
 
-    let new_user: User = build_user(id.clone(), parent.clone());
+    let new_user: User = build_user(id, parent);
 
     // Add User
-    database.get_mut(&certificate).unwrap().insert(id.clone(), new_user);
+    database.get_mut(certificate).unwrap().insert(id.to_string(), new_user);
 
     // Update Parent
-    database.get_mut(&certificate).unwrap().get_mut(&parent).unwrap().childs.push(id.clone());
+    database.get_mut(certificate).unwrap().get_mut(parent).unwrap().childs.push(id.to_string());
 
 
     /* Another implementation
@@ -68,14 +65,10 @@ fn add_user(id: String,
         } 
     }    
     */
-
-
-    return database
 }
 
 
-fn add_admin(certificate: String, mut database: HashMap<String, HashMap<String, User>>)
--> HashMap<String, HashMap<String, User>> {
+fn add_admin(certificate: &String, database: &mut HashMap<String, HashMap<String, User>>)  {
 
     let admin_id = String::from("admin");
     let admin: User = User{ id: admin_id.clone(),
@@ -83,24 +76,21 @@ fn add_admin(certificate: String, mut database: HashMap<String, HashMap<String, 
                             childs: Vec::new(),
                             reports: 0};
 
-    database.get_mut(&certificate).unwrap().insert(admin_id.clone(), admin);
-
-    return database
+    database.get_mut(certificate).unwrap().insert(admin_id, admin);
 }
+
 
 fn make_user_tree_test(branch: u16,
                         level: u16,
-                        certificate: String, 
-                        mut database: HashMap<String, HashMap<String, User>>)
-                        -> HashMap<String, HashMap<String, User>> {
+                        certificate: &String, 
+                        database: &mut HashMap<String, HashMap<String, User>>){
     
-    
-    database = add_admin(certificate.clone(), database);
+    add_admin(certificate, database);
 
     let mut parents: Vec<String> = Vec::new();
     parents.push(String::from("admin"));
 
-    for l in 1..level {
+    for _l in 1..level {
 
         let mut next_parents: Vec<String> = Vec::new();
 
@@ -109,7 +99,7 @@ fn make_user_tree_test(branch: u16,
             for b in 1..branch {
     
                 let id = format!("{parent}-{b}"); 
-                database = add_user(id.clone(), parent.clone(), certificate.clone(), database);
+                add_user(&id, parent, certificate, database);
 
                 next_parents.push(id)
     
@@ -121,21 +111,19 @@ fn make_user_tree_test(branch: u16,
         next_parents.clear();
 
     }
-
-    return database;
 }
 
 
 
-fn print_user_info(id: String, certificate: String, database: &HashMap<String, HashMap<String, User>>) {
+fn print_user_info(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) {
 
     println!("############ User Info ############");
     println!("user id: {}", id);
     println!("user certificate: {}", certificate);
 
 
-    if let Some(db) = database.get(&certificate) {
-        if let Some(user) = db.get(&id) {
+    if let Some(db) = database.get(certificate) {
+        if let Some(user) = db.get(id) {
             println!("user parent: {}", user.parent);
             println!("user childs: {:?}", user.childs);
             println!("user reports: {}", user.reports);
@@ -145,12 +133,12 @@ fn print_user_info(id: String, certificate: String, database: &HashMap<String, H
 }
 
 
-fn report_user(id: String, certificate: String, mut database: HashMap<String, HashMap<String, User>>) -> HashMap<String, HashMap<String, User>> {
+fn report_user(id: &String, certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
 
 
-    if let Some(db) = database.get_mut(&certificate) {
+    if let Some(db) = database.get_mut(certificate) {
 
-        if let Some(user) = db.get_mut(&id) {
+        if let Some(user) = db.get_mut(id) {
             user.reports += 1;
 
         } else {
@@ -160,27 +148,23 @@ fn report_user(id: String, certificate: String, mut database: HashMap<String, Ha
     } else {
         println!("certificate does not exist!")
     }    
-
-    return database
 }
 
 
-fn calculate_reports(id: String, certificate: String, database: HashMap<String, HashMap<String, User>>) -> u32 {
+fn calculate_reports(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) -> u32 {
 
     let mut reports: u32 = 0;
 
     let mut current_childs: Vec<String> = Vec::new();
     let mut next_childs: Vec<String> = Vec::new();
 
-    current_childs.push(id.clone());
-
-    let mut index: u32 = 0;
+    current_childs.push(id.to_string());
 
     loop {
 
         for child in current_childs.iter() {
 
-            if let Some(db) = database.get(&certificate) {
+            if let Some(db) = database.get(certificate) {
                 if let Some(user) = db.get(&child.clone()) {
                     reports += user.reports as u32;
                     next_childs.append(&mut user.childs.clone());
@@ -206,33 +190,35 @@ fn calculate_reports(id: String, certificate: String, database: HashMap<String, 
     return reports;
 }
 
+
 fn remove_user() {
     todo!()
 }
 
+
 fn main() {
 
     let mut database = build_database();
-
-    database = add_certificate_tree (String::from("post"), database);
-    database = add_certificate_tree (String::from("comment"), database);
-    database = add_certificate_tree (String::from("view"), database);
+ 
+    add_certificate_tree (&String::from("post"), &mut database);
+    add_certificate_tree (&String::from("comment"), &mut database);
+    add_certificate_tree (&String::from("view"), &mut database);    
 
     let certificate: String = String::from("post");
 
-    database = make_user_tree_test(4,4, certificate.clone(), database);
+    make_user_tree_test(4,4, &certificate, &mut database);
 
-    print_user_info(String::from("admin"), certificate.clone(), &database);
-    print_user_info(String::from("admin-2"), certificate.clone(), &database);
-    print_user_info(String::from("admin-2-1"), certificate.clone(), &database);
+    print_user_info(&String::from("admin"), &certificate, &database);
+    print_user_info(&String::from("admin-2"), &certificate, &database);
+    print_user_info(&String::from("admin-2-1"), &certificate, &database);
 
-    database = report_user(String::from("admin-2-1"), certificate.clone(), database);
-    database = report_user(String::from("admin-2-1"), certificate.clone(), database);
-    database = report_user(String::from("admin-2-1-3"), certificate.clone(), database);
+    report_user(&String::from("admin-2-1"), &certificate, &mut database);
+    report_user(&String::from("admin-2-1"), &certificate, &mut database);
+    report_user(&String::from("admin-2-1-3"), &certificate, &mut database);
 
-    print_user_info(String::from("admin-2-1"), certificate.clone(), &database);
+    print_user_info(&String::from("admin-2-1"), &certificate, &database);
 
-    let reports = calculate_reports(String::from("admin"), certificate.clone(), database);
+    calculate_reports(&String::from("admin"), &certificate, &database);
     
 
 }
