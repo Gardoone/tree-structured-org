@@ -1,3 +1,7 @@
+// TODO
+// Implements runtime log for each function
+// Error Handling
+
 use std::collections::HashMap;
 
 /// Represents a user in the system.
@@ -5,7 +9,8 @@ struct User {
     id: String,
     parent: String,
     childs: Vec<String>,
-    reports: u16
+    reports: u16,
+    blocked: bool,
 }
 
 /// Creates a new `User` with the given `id` and `parent`.
@@ -22,6 +27,7 @@ fn build_user(id: &String, parent: &String) -> User {
         parent: parent.to_string(),
         childs: Vec::new(),
         reports: 0,
+        blocked: false,
     }
 }
 
@@ -75,6 +81,10 @@ fn add_user(id: &String,
             certificate: &String,
             database: &mut HashMap<String, HashMap<String, User>>) {
 
+    if !user_has_permission(parent, certificate, &database) {
+        print!("user '{id}' does not have permission to add new user in certificate '{certificate}'")
+    }
+
     let new_user: User = build_user(id, parent);
 
     // Add User
@@ -83,20 +93,7 @@ fn add_user(id: &String,
     // Update Parent
     database.get_mut(certificate).unwrap().get_mut(parent).unwrap().childs.push(id.to_string());
 
-
-    /* Another implementation
-    // Add User
-    if let Some(db) = database.get_mut(&certificate) {
-        db.insert(id.clone(), new_user);
-
-        // Update Parent
-        if let Some(user) = db.get_mut(&parent) {
-            user.childs.push(id.clone());
-        } 
-    }    
-    */
 }
-
 
 // Adds an admin user to a specific certificate tree.
 ///
@@ -109,11 +106,119 @@ fn add_admin(certificate: &String, database: &mut HashMap<String, HashMap<String
     let admin: User = User{ id: admin_id.clone(),
                             parent: admin_id.clone(),
                             childs: Vec::new(),
-                            reports: 0};
+                            reports: 0, 
+                            blocked: false};
 
     database.get_mut(certificate).unwrap().insert(admin_id, admin);
 }
 
+/// Increments the report count for a user and all its ancestors.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `certificate` - A reference to the certificate under which the user resides.
+/// * `database` - A mutable reference to the database where the user's report count will be updated.
+fn report_user(id: &String, certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
+
+    let mut current_id = id.clone();
+
+    loop {
+        let db = match database.get_mut(certificate) {
+            Some(db) => db,
+            None => {
+                println!("certificate '{certificate}' not found.");
+                break;
+            }
+        };
+
+        let user = match db.get_mut(&current_id) {
+            Some(user) => user,
+            None => {
+                println!("user '{current_id}' not found in certificate tree '{certificate}'.");
+                break;
+            }
+        };
+
+        user.reports += 1;
+
+        let next_id = &user.parent;
+
+        if *next_id == current_id {
+            break;
+        }
+
+        current_id = next_id.to_string();
+    }
+}
+
+/// Blocks a user from having permission in a certificate tree.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `certificate` - A reference to the certificate under which the user resides.
+/// * `database` - A mutable reference to the database where the user's blocked status will be updated.
+fn block_user(id: &String, certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
+
+    if let Some(db) = database.get_mut(certificate) {
+
+        if let Some(user) = db.get_mut(id) {
+            user.blocked = true;
+
+            println!("user {id} has no longer permission in certificate {certificate}")
+        } 
+
+    }
+
+}
+
+/// Checks if a user has permission in a certificate tree.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `certificate` - A reference to the certificate under which the user resides.
+/// * `database` - A reference to the database from which the user's permission status will be checked.
+///
+/// # Returns
+/// `true` if the user has permission, `false` otherwise.
+fn user_has_permission(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) -> bool {
+
+    let mut current_id = id.clone();
+
+    loop {
+        let db = match database.get(certificate) {
+            Some(db) => db,
+            None => {
+                println!("certificate '{certificate}' not found.");
+                break;
+            }
+        };
+
+        let user = match db.get(&current_id) {
+            Some(user) => user,
+            None => {
+                println!("user '{current_id}' not found in certificate tree '{certificate}'.");
+                break;
+            }
+        };
+        
+        if user.blocked {
+
+            println!("user {id} has no permission in certificate {certificate}");
+            return false;
+        }
+
+        let next_id = &user.parent;
+
+        if *next_id == current_id {
+            break;
+        }
+
+        current_id = next_id.to_string();
+    }
+
+    println!("user {id} has permission in certificate {certificate}");
+    return true;
+}
 
 /// Creates a hierarchical user tree for testing purposes.
 ///
@@ -174,54 +279,12 @@ fn print_user_info(id: &String, certificate: &String, database: &HashMap<String,
             println!("user parent: {}", user.parent);
             println!("user childs: {:?}", user.childs);
             println!("user reports: {}", user.reports);
+            println!("user blocked: {}", user.blocked);
         } 
     }        
 
 }
 
-/// Increments the report count for a user and all its ancestors.
-///
-/// # Arguments
-/// * `id` - A reference to the user's ID.
-/// * `certificate` - A reference to the certificate under which the user resides.
-/// * `database` - A mutable reference to the database where the user's report count will be updated.
-fn report_user(id: &String, certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
-
-    let mut current_id = id.clone();
-
-    loop {
-        let db = match database.get_mut(certificate) {
-            Some(db) => db,
-            None => {
-                println!("certificate '{certificate}' does not exist!");
-                break;
-            }
-        };
-
-        let user = match db.get_mut(&current_id) {
-            Some(user) => user,
-            None => {
-                println!("user '{current_id}' does not exist in certificate '{certificate}'!");
-                break;
-            }
-        };
-
-        user.reports += 1;
-
-        let next_id = &user.parent;
-
-        if *next_id == current_id {
-            break;
-        }
-
-        current_id = next_id.to_string();
-    }
-}
-
-
-fn remove_user() {
-    todo!()
-}
 
 
 fn main() {
@@ -234,7 +297,7 @@ fn main() {
 
     let certificate: String = String::from("post");
 
-    make_user_tree_test(4,4, &certificate, &mut database);
+    make_user_tree_test(4,10, &certificate, &mut database);
 
     print_user_info(&String::from("admin"), &certificate, &database);
     print_user_info(&String::from("admin-2"), &certificate, &database);
@@ -245,6 +308,12 @@ fn main() {
     report_user(&String::from("admin-2-1-3"), &certificate, &mut database);
 
     print_user_info(&String::from("admin-2-1"), &certificate, &database);
-    print_user_info(&String::from("admin-2-1-3"), &certificate, &database);    
+    print_user_info(&String::from("admin-2-1-3"), &certificate, &database); 
+
+    user_has_permission(&String::from("admin-2-1-3"), &certificate, &database);
+    block_user(&String::from("admin-2-1-3"), &certificate, &mut database);
+    user_has_permission(&String::from("admin-2-1-3"), &certificate, &database);
+
+    add_user(&String::from("new_user"), &String::from("admin-2-1-3"), &certificate, &mut database)
 
 }
