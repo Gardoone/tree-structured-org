@@ -1,5 +1,6 @@
-use std::{clone, collections::HashMap};
+use std::collections::HashMap;
 
+/// Represents a user in the system.
 struct User {
     id: String,
     parent: String,
@@ -7,6 +8,14 @@ struct User {
     reports: u16
 }
 
+/// Creates a new `User` with the given `id` and `parent`.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `parent` - A reference to the user's parent ID.
+///
+/// # Returns
+/// A `User` struct with the specified ID and parent, an empty list of children, and zero reports.
 fn build_user(id: &String, parent: &String) -> User {
     User {
         id: id.to_string(),
@@ -16,6 +25,10 @@ fn build_user(id: &String, parent: &String) -> User {
     }
 }
 
+/// Initializes an empty database.
+///
+/// # Returns
+/// An empty `HashMap` that maps certificates to `HashMap` of users.
 fn build_database()-> HashMap<String, HashMap<String, User>> {
 
     let database: HashMap<String, HashMap<String, User>> = HashMap::new();
@@ -24,6 +37,10 @@ fn build_database()-> HashMap<String, HashMap<String, User>> {
 }
 
 
+/// Initializes an empty user certificate tree.
+///
+/// # Returns
+/// An empty `HashMap` that maps user IDs to `User` structs.
 fn build_certificate_tree () -> HashMap<String, User> {
 
     let users: HashMap<String, User> = HashMap::new();
@@ -32,6 +49,11 @@ fn build_certificate_tree () -> HashMap<String, User> {
 }
 
 
+/// Adds a new certificate tree to the database.
+///
+/// # Arguments
+/// * `certificate` - A reference to the certificate name.
+/// * `database` - A mutable reference to the database where the certificate tree will be added.
 fn add_certificate_tree (certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
 
     let users = build_certificate_tree ();
@@ -40,6 +62,14 @@ fn add_certificate_tree (certificate: &String, database: &mut HashMap<String, Ha
 
 }
 
+
+/// Adds a new user to a specific certificate tree in the database.
+///
+/// # Arguments
+/// * `id` - A reference to the new user's ID.
+/// * `parent` - A reference to the parent user's ID.
+/// * `certificate` - A reference to the certificate under which the user is added.
+/// * `database` - A mutable reference to the database where the user will be added.
 fn add_user(id: &String,
             parent: &String,
             certificate: &String,
@@ -68,6 +98,11 @@ fn add_user(id: &String,
 }
 
 
+// Adds an admin user to a specific certificate tree.
+///
+/// # Arguments
+/// * `certificate` - A reference to the certificate under which the admin will be added.
+/// * `database` - A mutable reference to the database where the admin will be added.
 fn add_admin(certificate: &String, database: &mut HashMap<String, HashMap<String, User>>)  {
 
     let admin_id = String::from("admin");
@@ -80,6 +115,13 @@ fn add_admin(certificate: &String, database: &mut HashMap<String, HashMap<String
 }
 
 
+/// Creates a hierarchical user tree for testing purposes.
+///
+/// # Arguments
+/// * `branch` - The number of child users each parent user will have at each level.
+/// * `level` - The number of levels in the user hierarchy.
+/// * `certificate` - A reference to the certificate under which the users will be created.
+/// * `database` - A mutable reference to the database where the user tree will be added.
 fn make_user_tree_test(branch: u16,
                         level: u16,
                         certificate: &String, 
@@ -114,7 +156,12 @@ fn make_user_tree_test(branch: u16,
 }
 
 
-
+/// Prints information about a specific user.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `certificate` - A reference to the certificate under which the user resides.
+/// * `database` - A reference to the database from which user information will be retrieved.
 fn print_user_info(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) {
 
     println!("############ User Info ############");
@@ -132,7 +179,12 @@ fn print_user_info(id: &String, certificate: &String, database: &HashMap<String,
 
 }
 
-
+/// Increments the report count for a user and all its ancestors.
+///
+/// # Arguments
+/// * `id` - A reference to the user's ID.
+/// * `certificate` - A reference to the certificate under which the user resides.
+/// * `database` - A mutable reference to the database where the user's report count will be updated.
 fn report_user(id: &String, certificate: &String, database: &mut HashMap<String, HashMap<String, User>>) {
 
     let mut current_id = id.clone();
