@@ -1,19 +1,10 @@
 use std::collections::HashMap;
 
+#[derive(Debug, Default)]
 struct Statistics {
     user_add: u32,
     user_update: u32,
     user_read: u32,
-}
-
-impl Default for Statistics {
-    fn default() -> Statistics {
-        Statistics {
-            user_add: 0,
-            user_update: 0,
-            user_read: 0,
-        }
-    }
 }
 
 /// Represents a user in the system.
