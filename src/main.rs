@@ -16,13 +16,15 @@ struct User {
     blocked: bool,
 }
 
-fn build_user(id: &String, parent: &String) -> User {
-    User {
-        id: id.to_string(),
-        parent: parent.to_string(),
-        children: Vec::new(),
-        reports: 0,
-        blocked: false,
+impl User {
+    fn new(id: &str, parent: &str) -> User {
+        User {
+            id: id.to_owned(),
+            parent: parent.to_owned(),
+            children: Vec::new(),
+            reports: 0,
+            blocked: false,
+        }
     }
 }
 
@@ -170,7 +172,7 @@ fn add_user(user_id: &String,
             };
 
             // Add User
-            let new_user: User = build_user(user_id, parent);
+            let new_user: User = User::new(user_id, parent);
             users.insert(user_id.clone(), new_user);
 
             statistics.user_add += 1;
