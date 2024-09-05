@@ -32,16 +32,15 @@ fn build_database()-> HashMap<String, HashMap<String, User>> {
 
     let database: HashMap<String, HashMap<String, User>> = HashMap::new();
 
-    return database;
+    database
 }
 
 fn build_user_tree () -> HashMap<String, User> {
 
     let users: HashMap<String, User> = HashMap::new();
 
-    return users
+    users
 }
-
 
 /// Adds a new user tree to the database based on certificate
 fn add_user_tree (certificate: &String,
