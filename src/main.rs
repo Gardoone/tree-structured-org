@@ -230,13 +230,12 @@ fn report_user(user_id: &String,
     Ok(())    
 }
 
-
 /// Blocks a user from having permission in a certificate tree.
-fn block_user(user_id: &String, 
-              blocker: &String, 
-              certificate: &String, 
-              database: &mut HashMap<String, HashMap<String, User>>, 
-              statistics: &mut Statistics) 
+fn block_user(user_id: &String,
+              blocker: &String,
+              certificate: &String,
+              database: &mut HashMap<String, HashMap<String, User>>,
+              statistics: &mut Statistics)
               -> Result<(), String> {
 
     match database.get_mut(certificate) {
@@ -250,16 +249,12 @@ fn block_user(user_id: &String,
                         return Err(format!("user {user_id} has already been blocked."));
                     }
 
-                    if !(user.parent == *blocker) {
-
-                        if !(*user_id == *blocker) {
-                            return Err(format!("Only user's parent or themselves can block the user."));
-                        }
-    
+                    if user.parent != *blocker && *user_id != *blocker {
+                        return Err("Only user's parent or themselves can block the user.".to_string());
                     }
 
-                    user.blocked = true;        
-                    statistics.user_update += 1;            
+                    user.blocked = true;
+                    statistics.user_update += 1;
 
                 },
 
@@ -275,10 +270,8 @@ fn block_user(user_id: &String,
 
     println!("user {user_id} blocked under certificate '{certificate}'");
 
-    Ok(())        
-
+    Ok(())
 }
-
 
 fn unblock_user(user_id: &String, 
                 unblocker: &String, 
