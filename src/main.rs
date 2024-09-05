@@ -1,19 +1,10 @@
 use std::collections::HashMap;
 
+#[derive(Debug, Default)]
 struct Statistics {
     user_add: u32,
     user_update: u32,
     user_read: u32,
-}
-
-impl Default for Statistics {
-    fn default() -> Statistics {
-        Statistics {
-            user_add: 0,
-            user_update: 0,
-            user_read: 0,
-        }
-    }
 }
 
 /// Represents a user in the system.
@@ -25,13 +16,15 @@ struct User {
     blocked: bool,
 }
 
-fn build_user(id: &String, parent: &String) -> User {
-    User {
-        id: id.to_string(),
-        parent: parent.to_string(),
-        children: Vec::new(),
-        reports: 0,
-        blocked: false,
+impl User {
+    fn new(id: &str, parent: &str) -> User {
+        User {
+            id: id.to_owned(),
+            parent: parent.to_owned(),
+            children: Vec::new(),
+            reports: 0,
+            blocked: false,
+        }
     }
 }
 
@@ -39,16 +32,15 @@ fn build_database()-> HashMap<String, HashMap<String, User>> {
 
     let database: HashMap<String, HashMap<String, User>> = HashMap::new();
 
-    return database;
+    database
 }
 
 fn build_user_tree () -> HashMap<String, User> {
 
     let users: HashMap<String, User> = HashMap::new();
 
-    return users
+    users
 }
-
 
 /// Adds a new user tree to the database based on certificate
 fn add_user_tree (certificate: &String,
@@ -60,18 +52,18 @@ fn add_user_tree (certificate: &String,
         return Err(format!("User tree under certificate '{certificate}' already exists in database."));
     }
 
-    let users = build_user_tree ();
+    let users: HashMap<String, User> = build_user_tree ();
 
-    database.insert(certificate.to_string(), users);   
+    database.insert(certificate.to_string(), users);
 
 
     // Assign an admin
-    let admin_id = String::from("admin");
+    let admin_id: String = String::from("admin");
     let admin: User = User{ id: admin_id.clone(),
-                            parent: admin_id.clone(),
-                            children: Vec::new(),
-                            reports: 0, 
-                            blocked: false};
+        parent: admin_id.clone(),
+        children: Vec::new(),
+        reports: 0,
+        blocked: false};
 
 
     database.get_mut(certificate).unwrap().insert(admin_id, admin);
@@ -82,20 +74,19 @@ fn add_user_tree (certificate: &String,
     Ok(())
 }
 
-
 /// Checks if a user has permission in a user tree.
-fn check_user_permission(user_id: &String, 
-                         certificate: &String, 
+fn check_user_permission(user_id: &str,
+                         certificate: &String,
                          database: &HashMap<String, HashMap<String, User>>,
-                         statistics: &mut Statistics) 
+                         statistics: &mut Statistics)
                          -> Result<bool, String> {
 
-    let mut current_id = user_id.clone();
+    let mut current_id = user_id;
 
     match database.get(certificate) {
         Some(users) => {
             loop {
-                match users.get(&current_id) {
+                match users.get(current_id) {
 
                     Some(user) => {
 
@@ -110,7 +101,7 @@ fn check_user_permission(user_id: &String,
                             break;
                         }
 
-                        current_id = user.parent.clone();                        
+                        current_id = &user.parent;
 
                     },
                     None => {
@@ -126,23 +117,22 @@ fn check_user_permission(user_id: &String,
 
     // println!("user {user_id} has permission in certificate '{certificate}'");
 
-    return Ok(true);
+    Ok(true)
 }
-
 
 /// Add a user to user tree in the database based on certificate
 fn add_user(user_id: &String,
             parent: &String,
             certificate: &String,
             database: &mut HashMap<String, HashMap<String, User>>,
-            statistics: &mut Statistics) 
-            -> Result<(), String> {   
+            statistics: &mut Statistics)
+            -> Result<(), String> {
 
     if *user_id == *parent {
-        return Err(format!("parent id must not be intentical to user id"));
+        return Err("parent id must not be identical to user id".to_string());
     }
 
-    match check_user_permission(parent, certificate, &database, statistics) {
+    match check_user_permission(parent, certificate, database, statistics) {
         Ok(x) => {
             if !x {
                 return Err(format!("parent {parent} does not have permission."))
@@ -163,7 +153,7 @@ fn add_user(user_id: &String,
             // Update Parent
             match users.get_mut(parent) {
                 Some(user) => {
-                    
+
                     statistics.user_read += 1;
                     statistics.user_update += 1;
 
@@ -179,7 +169,7 @@ fn add_user(user_id: &String,
             };
 
             // Add User
-            let new_user: User = build_user(user_id, parent);
+            let new_user: User = User::new(user_id, parent);
             users.insert(user_id.clone(), new_user);
 
             statistics.user_add += 1;
@@ -195,10 +185,7 @@ fn add_user(user_id: &String,
     println!("user '{user_id}' added by parent '{parent}' under certificate '{certificate}' in database");
 
     Ok(())
-
 }
-
-
 
 /// Increments the report count for a user and all its ancestors.
 fn report_user(user_id: &String, 
@@ -243,13 +230,12 @@ fn report_user(user_id: &String,
     Ok(())    
 }
 
-
 /// Blocks a user from having permission in a certificate tree.
-fn block_user(user_id: &String, 
-              blocker: &String, 
-              certificate: &String, 
-              database: &mut HashMap<String, HashMap<String, User>>, 
-              statistics: &mut Statistics) 
+fn block_user(user_id: &String,
+              blocker: &String,
+              certificate: &String,
+              database: &mut HashMap<String, HashMap<String, User>>,
+              statistics: &mut Statistics)
               -> Result<(), String> {
 
     match database.get_mut(certificate) {
@@ -263,16 +249,12 @@ fn block_user(user_id: &String,
                         return Err(format!("user {user_id} has already been blocked."));
                     }
 
-                    if !(user.parent == *blocker) {
-
-                        if !(*user_id == *blocker) {
-                            return Err(format!("Only user's parent or themselves can block the user."));
-                        }
-    
+                    if user.parent != *blocker && *user_id != *blocker {
+                        return Err("Only user's parent or themselves can block the user.".to_string());
                     }
 
-                    user.blocked = true;        
-                    statistics.user_update += 1;            
+                    user.blocked = true;
+                    statistics.user_update += 1;
 
                 },
 
@@ -288,20 +270,18 @@ fn block_user(user_id: &String,
 
     println!("user {user_id} blocked under certificate '{certificate}'");
 
-    Ok(())        
-
+    Ok(())
 }
 
-
-fn unblock_user(user_id: &String, 
-                unblocker: &String, 
-                certificate: &String, 
+fn unblock_user(user_id: &String,
+                unblocker: &String,
+                certificate: &String,
                 database: &mut HashMap<String, HashMap<String, User>>,
-                statistics: &mut Statistics) 
+                statistics: &mut Statistics)
                 -> Result<(), String> {
 
     // Check if unblocker has permission
-    match check_user_permission(unblocker, certificate, &database, statistics) {
+    match check_user_permission(unblocker, certificate, database, statistics) {
         Ok(x) => {
             if !x {
                 return Err(format!("unblocker {unblocker} does not have permission."))
@@ -313,7 +293,7 @@ fn unblock_user(user_id: &String,
     }
 
     // Check if user has already blocked
-    match check_user_permission(user_id, certificate, &database, statistics) {
+    match check_user_permission(user_id, certificate, database, statistics) {
         Ok(x) => {
             if x {
                 return Err(format!("user {user_id} already has permission."))
@@ -358,7 +338,7 @@ fn unblock_user(user_id: &String,
 
                     let index = user.children.iter().position(|x| *x == user_id.clone()).unwrap();
                     user.children.remove(index);
-                    
+
                 },
                 None => {
                     return Err(format!("user '{user_id}' not found in certificate tree '{certificate}'."));
@@ -373,12 +353,12 @@ fn unblock_user(user_id: &String,
                     statistics.user_update += 1;
 
                     user.children.push(user_id.to_string());
-                    
+
                 },
                 None => {
                     return Err(format!("user '{user_id}' not found in certificate tree '{certificate}'."));
                 }
-            };            
+            };
 
 
         },
@@ -389,16 +369,14 @@ fn unblock_user(user_id: &String,
 
     println!("user {user_id} unblocked under certificate '{certificate}'");
     Ok(())
-
 }
-
 
 /// Creates a hierarchical user tree for testing purposes.
 fn make_user_tree_test(branch: u16,
-                        level: u16,
-                        certificate: &String, 
-                        database: &mut HashMap<String, HashMap<String, User>>,
-                        statistics: &mut Statistics) {
+                       level: u16,
+                       certificate: &String,
+                       database: &mut HashMap<String, HashMap<String, User>>,
+                       statistics: &mut Statistics) {
 
     let mut parents: Vec<String> = Vec::new();
     parents.push(String::from("admin"));
@@ -409,22 +387,21 @@ fn make_user_tree_test(branch: u16,
 
         for parent in parents.iter() {
             for b in 1..branch {
-    
-                let id = format!("{parent}-{b}"); 
+
+                let id = format!("{parent}-{b}");
                 let _ = add_user(&id, parent, certificate, database, statistics);
 
                 next_parents.push(id)
             }
-            
+
         }
 
         parents = next_parents.clone();
         next_parents.clear();
 
     }
-    
-}
 
+}
 
 /// Prints information about a specific user.
 fn print_user_info(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) {
