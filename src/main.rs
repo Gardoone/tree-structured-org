@@ -52,18 +52,18 @@ fn add_user_tree (certificate: &String,
         return Err(format!("User tree under certificate '{certificate}' already exists in database."));
     }
 
-    let users = build_user_tree ();
+    let users: HashMap<String, User> = build_user_tree ();
 
-    database.insert(certificate.to_string(), users);   
+    database.insert(certificate.to_string(), users);
 
 
     // Assign an admin
-    let admin_id = String::from("admin");
+    let admin_id: String = String::from("admin");
     let admin: User = User{ id: admin_id.clone(),
-                            parent: admin_id.clone(),
-                            children: Vec::new(),
-                            reports: 0, 
-                            blocked: false};
+        parent: admin_id.clone(),
+        children: Vec::new(),
+        reports: 0,
+        blocked: false};
 
 
     database.get_mut(certificate).unwrap().insert(admin_id, admin);
