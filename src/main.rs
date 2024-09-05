@@ -125,14 +125,14 @@ fn add_user(user_id: &String,
             parent: &String,
             certificate: &String,
             database: &mut HashMap<String, HashMap<String, User>>,
-            statistics: &mut Statistics) 
-            -> Result<(), String> {   
+            statistics: &mut Statistics)
+            -> Result<(), String> {
 
     if *user_id == *parent {
-        return Err(format!("parent id must not be intentical to user id"));
+        return Err("parent id must not be identical to user id".to_string());
     }
 
-    match check_user_permission(parent, certificate, &database, statistics) {
+    match check_user_permission(parent, certificate, database, statistics) {
         Ok(x) => {
             if !x {
                 return Err(format!("parent {parent} does not have permission."))
@@ -153,7 +153,7 @@ fn add_user(user_id: &String,
             // Update Parent
             match users.get_mut(parent) {
                 Some(user) => {
-                    
+
                     statistics.user_read += 1;
                     statistics.user_update += 1;
 
@@ -185,10 +185,7 @@ fn add_user(user_id: &String,
     println!("user '{user_id}' added by parent '{parent}' under certificate '{certificate}' in database");
 
     Ok(())
-
 }
-
-
 
 /// Increments the report count for a user and all its ancestors.
 fn report_user(user_id: &String, 
