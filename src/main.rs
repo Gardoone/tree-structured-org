@@ -273,15 +273,15 @@ fn block_user(user_id: &String,
     Ok(())
 }
 
-fn unblock_user(user_id: &String, 
-                unblocker: &String, 
-                certificate: &String, 
+fn unblock_user(user_id: &String,
+                unblocker: &String,
+                certificate: &String,
                 database: &mut HashMap<String, HashMap<String, User>>,
-                statistics: &mut Statistics) 
+                statistics: &mut Statistics)
                 -> Result<(), String> {
 
     // Check if unblocker has permission
-    match check_user_permission(unblocker, certificate, &database, statistics) {
+    match check_user_permission(unblocker, certificate, database, statistics) {
         Ok(x) => {
             if !x {
                 return Err(format!("unblocker {unblocker} does not have permission."))
@@ -293,7 +293,7 @@ fn unblock_user(user_id: &String,
     }
 
     // Check if user has already blocked
-    match check_user_permission(user_id, certificate, &database, statistics) {
+    match check_user_permission(user_id, certificate, database, statistics) {
         Ok(x) => {
             if x {
                 return Err(format!("user {user_id} already has permission."))
@@ -338,7 +338,7 @@ fn unblock_user(user_id: &String,
 
                     let index = user.children.iter().position(|x| *x == user_id.clone()).unwrap();
                     user.children.remove(index);
-                    
+
                 },
                 None => {
                     return Err(format!("user '{user_id}' not found in certificate tree '{certificate}'."));
@@ -353,12 +353,12 @@ fn unblock_user(user_id: &String,
                     statistics.user_update += 1;
 
                     user.children.push(user_id.to_string());
-                    
+
                 },
                 None => {
                     return Err(format!("user '{user_id}' not found in certificate tree '{certificate}'."));
                 }
-            };            
+            };
 
 
         },
@@ -369,16 +369,14 @@ fn unblock_user(user_id: &String,
 
     println!("user {user_id} unblocked under certificate '{certificate}'");
     Ok(())
-
 }
-
 
 /// Creates a hierarchical user tree for testing purposes.
 fn make_user_tree_test(branch: u16,
-                        level: u16,
-                        certificate: &String, 
-                        database: &mut HashMap<String, HashMap<String, User>>,
-                        statistics: &mut Statistics) {
+                       level: u16,
+                       certificate: &String,
+                       database: &mut HashMap<String, HashMap<String, User>>,
+                       statistics: &mut Statistics) {
 
     let mut parents: Vec<String> = Vec::new();
     parents.push(String::from("admin"));
@@ -389,22 +387,21 @@ fn make_user_tree_test(branch: u16,
 
         for parent in parents.iter() {
             for b in 1..branch {
-    
-                let id = format!("{parent}-{b}"); 
+
+                let id = format!("{parent}-{b}");
                 let _ = add_user(&id, parent, certificate, database, statistics);
 
                 next_parents.push(id)
             }
-            
+
         }
 
         parents = next_parents.clone();
         next_parents.clear();
 
     }
-    
-}
 
+}
 
 /// Prints information about a specific user.
 fn print_user_info(id: &String, certificate: &String, database: &HashMap<String, HashMap<String, User>>) {
