@@ -74,20 +74,19 @@ fn add_user_tree (certificate: &String,
     Ok(())
 }
 
-
 /// Checks if a user has permission in a user tree.
-fn check_user_permission(user_id: &String, 
-                         certificate: &String, 
+fn check_user_permission(user_id: &str,
+                         certificate: &String,
                          database: &HashMap<String, HashMap<String, User>>,
-                         statistics: &mut Statistics) 
+                         statistics: &mut Statistics)
                          -> Result<bool, String> {
 
-    let mut current_id = user_id.clone();
+    let mut current_id = user_id;
 
     match database.get(certificate) {
         Some(users) => {
             loop {
-                match users.get(&current_id) {
+                match users.get(current_id) {
 
                     Some(user) => {
 
@@ -102,7 +101,7 @@ fn check_user_permission(user_id: &String,
                             break;
                         }
 
-                        current_id = user.parent.clone();                        
+                        current_id = &user.parent;
 
                     },
                     None => {
@@ -118,9 +117,8 @@ fn check_user_permission(user_id: &String,
 
     // println!("user {user_id} has permission in certificate '{certificate}'");
 
-    return Ok(true);
+    Ok(true)
 }
-
 
 /// Add a user to user tree in the database based on certificate
 fn add_user(user_id: &String,
