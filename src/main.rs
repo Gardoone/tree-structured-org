@@ -440,6 +440,30 @@ fn print_statistics(statistics: &Statistics){
 
 }
 
+fn print_user_tree_info(certificate: &String, database: &HashMap<String, HashMap<String, User>>)  {
+
+    println!("***************User Tree Information***************");
+    match database.get(certificate) {
+        Some(users) => {
+
+            println!("Number of users under certificate '{}': '{}'", certificate, users.keys().len());
+            let mut average_of_children: f32 = 0.0;
+
+            for (_key, user) in users {
+                average_of_children += user.children.len() as f32;
+            }
+
+            average_of_children /= users.keys().len() as f32;
+
+            println!("Average of users' children under certificate '{}': '{}'", certificate, average_of_children);
+            
+        },
+        None => {
+            println!("certificate '{certificate}' not found in database.");
+        }
+    };
+}
+
 /// For test
 fn main() {
 
@@ -492,7 +516,7 @@ fn main() {
 
     let certificate: String = String::from("post");
 
-    make_user_tree_test(6,6, &certificate, &mut database, &mut statistics);
+    make_user_tree_test(7,7, &certificate, &mut database, &mut statistics);
 
     print_user_info(&String::from("admin"), &certificate, &database);
     print_user_info(&String::from("admin-2"), &certificate, &database);
@@ -622,7 +646,7 @@ fn main() {
     print_user_info(&String::from("admin-4-1-3"), &certificate, &database);
 
 
-
     print_statistics(&statistics);
+    print_user_tree_info(&certificate, &database)
 
 }
