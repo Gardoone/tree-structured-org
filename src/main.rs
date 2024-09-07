@@ -217,7 +217,7 @@ fn report_user(user_id: &String,
 
                     },
                     None => {
-                        println!("user '{current_id}' not found in certificate tree '{certificate}'.");
+                        return Err(format!("user '{current_id}' not found in certificate tree '{certificate}'."));
                     }
                 };
             }
@@ -447,15 +447,26 @@ fn print_user_tree_info(certificate: &String, database: &HashMap<String, HashMap
         Some(users) => {
 
             println!("Number of users under certificate '{}': '{}'", certificate, users.keys().len());
-            let mut average_of_children: f32 = 0.0;
+            
+            let mut average: f32 = 0.0;
+
+            let mut average_excluded_childless: f32 = 0.0;
+            let mut n: u32 = 0;
 
             for (_key, user) in users {
-                average_of_children += user.children.len() as f32;
+                average += user.children.len() as f32;
+
+                if !(user.children.len() == 0) {
+                    n += 1;
+                    average_excluded_childless += user.children.len() as f32;
+                }
             }
 
-            average_of_children /= users.keys().len() as f32;
+            average /= users.keys().len() as f32;
+            average_excluded_childless /= n as f32;
 
-            println!("Average of users' children under certificate '{}': '{}'", certificate, average_of_children);
+            eprintln!("Average of users' children under certificate '{}': '{}' (included childless)", certificate, average);
+            eprintln!("Average of users' children under certificate '{}': '{}' (excluded childless)", certificate, average_excluded_childless);
             
         },
         None => {
@@ -516,7 +527,7 @@ fn main() {
 
     let certificate: String = String::from("post");
 
-    make_user_tree_test(7,7, &certificate, &mut database, &mut statistics);
+    make_user_tree_test(6,6, &certificate, &mut database, &mut statistics);
 
     print_user_info(&String::from("admin"), &certificate, &database);
     print_user_info(&String::from("admin-2"), &certificate, &database);
